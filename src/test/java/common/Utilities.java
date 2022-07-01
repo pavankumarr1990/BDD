@@ -4,6 +4,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.openqa.selenium.*;
 import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
@@ -17,6 +18,7 @@ import java.time.Duration;
 import java.util.*;
 
 import static common.SeleniumDriver.getDriver;
+import static common.SeleniumDriver.seleniumDriver;
 
 public class Utilities {
     WebDriver driver;
@@ -26,11 +28,14 @@ public class Utilities {
     }
 
     JavascriptExecutor executor = (JavascriptExecutor) getDriver();
-    public int normalWaitTime = 120;
+    public int normalWaitTime = 60;
 
-    public void waitUntilElementPresence(By locator, int timeOutInSeconds) {
-        new WebDriverWait(getDriver(), Duration.ofSeconds(timeOutInSeconds)).until(ExpectedConditions.presenceOfElementLocated(locator));
+    public void waitUntilElementPresence(WebElement webElement, int timeOutInSeconds) {
+        synchronized (getDriver()) {
+            new WebDriverWait(getDriver(), Duration.ofSeconds(timeOutInSeconds)).until(ExpectedConditions.visibilityOf(webElement));
+        }
     }
+
 
     public void waitUntilElementPresence(String xpath, int timeOutInSeconds) {
         By locator = By.xpath(xpath);
@@ -38,24 +43,17 @@ public class Utilities {
     }
 
     public void waitUntilElementVisible(WebElement webElement, int timeOutInSeconds) {
-        new WebDriverWait(getDriver(), Duration.ofSeconds(timeOutInSeconds)).until(ExpectedConditions.visibilityOfElementLocated((By) webElement));
+        new WebDriverWait(getDriver(), Duration.ofSeconds(timeOutInSeconds)).until(ExpectedConditions.visibilityOf(webElement));
     }
 
-    public void waitUntilElementVisiblePavan(WebElement webElement, int timeOutInSeconds) {
-        new WebDriverWait(getDriver(), Duration.ofSeconds(timeOutInSeconds)).until(ExpectedConditions.visibilityOfElementLocated((By) webElement));
+    public void waitUntilElementNotVisible(WebElement webElement, int timeOutInSeconds) {
+        new WebDriverWait(getDriver(), Duration.ofSeconds(timeOutInSeconds)).until(ExpectedConditions.invisibilityOf(webElement));
     }
 
-    public void clickElement(WebElement webElement) throws InterruptedException {
-        webElement.wait(normalWaitTime * 1000);
+    public void clickElement(WebElement webElement) {
+        waitUntilElementPresence(webElement, normalWaitTime);
         if (!driverClick(webElement)) {
-            executor.executeScript("arguments[0].click();", webElement);
-        }
-    }
-
-    public void clickElement(By locator) {
-        waitUntilElementPresence(locator, normalWaitTime);
-        if (!driverClick(locator)) {
-            executor.executeScript("arguments[0].click();", getDriver().findElement(locator));
+            executor.executeScript("arguments[0].click();", driver.findElement((By) webElement));
         }
     }
 
@@ -86,29 +84,10 @@ public class Utilities {
         }
     }
 
-    public boolean checkVisibility(By locator) {
-        try {
-            new WebDriverWait(getDriver(), Duration.ofSeconds(2)).until(ExpectedConditions.visibilityOfElementLocated(locator));
-            getDriver().findElement(locator).wait(6000);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
     public boolean checkVisibilityWithWait(WebElement webElement, int timeOutInSeconds) {
         try {
             webElement.wait(timeOutInSeconds * 1000);
             webElement.wait();
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    public boolean checkPresence(WebElement webElement) {
-        try {
-            webElement.wait(5000);
             return true;
         } catch (Exception e) {
             return false;
@@ -164,7 +143,7 @@ public class Utilities {
 
     public boolean typeStrValue(WebElement webElement, String value) {
         try {
-//            waitUntilElementPresence((By) webElement, normalWaitTime);
+            waitUntilElementPresence(webElement, normalWaitTime);
             webElement.clear();
             Thread.sleep(200);
             webElement.sendKeys(value);
@@ -221,6 +200,7 @@ public class Utilities {
                 until(ExpectedConditions.
                         frameToBeAvailableAndSwitchToIt(frameElement));
     }
+
     public Boolean scrollToView(WebElement elementParam) {
         try {
             executor.executeScript("arguments[0].scrollIntoView(true);", (elementParam));
@@ -229,25 +209,31 @@ public class Utilities {
             return false;
         }
     }
+
     public void scrollToUp() {
         executor.executeScript("document.documentElement.scrollTop = 0;");
     }
+
     public void scrollToDown() {
         executor.executeScript("document.documentElement.scrollTop=4000;");
     }
+
     public void clearField(WebElement element) {
         Actions action = new Actions(getDriver());
         action.moveToElement(element).click().sendKeys(Keys.HOME).keyDown(Keys.SHIFT).sendKeys(Keys.END)
                 .keyUp(Keys.SHIFT).sendKeys(Keys.BACK_SPACE).build().perform();
     }
+
     public void clickOnElementWithWait(By object, long wait) throws InterruptedException {
         getDriver().findElement(object).wait(wait);
         getDriver().findElement(object).click();
     }
+
     public void clickOnElementWithWait(String object, int wait) throws InterruptedException {
         getDriver().findElement(By.xpath(object)).wait(wait);
         getDriver().findElement(By.xpath(object)).click();
     }
+
     public void writeJson(String key, String value) {
         String folderSep = System.getProperty("file.separator");
         String filePath = System.getProperty("user.dir") + folderSep + "src" + folderSep + "main" +
@@ -263,10 +249,12 @@ public class Utilities {
             jsonFile.flush();
             jsonFile.close();
         } catch (Exception e) {
-            Assert.assertTrue(false,"Unable to write the data to the Json file");
+            Assert.assertTrue(false, "Unable to write the data to the Json file");
         }
     }
+
     Assert Validator;
+
     public String readJson(String key) {
         JSONParser parser = new JSONParser();
         String folderSep = System.getProperty("file.separator");
@@ -282,5 +270,19 @@ public class Utilities {
             Validator.assertTrue(false, "Unable to read from JSON file" + filePath);
         }
         return "";
+    }
+
+    public boolean selectFromDropDown(WebElement webElement, String value) {
+        WebDriverWait wait = new WebDriverWait(getDriver(), Duration.ofSeconds(60));
+        try {
+            waitUntilElementPresence(webElement, normalWaitTime);
+            waitUntilElementVisible(webElement, normalWaitTime);
+            Select select = new Select(webElement);
+            select.selectByVisibleText(value);
+        } catch (Exception e) {
+            return false;
+
+        }
+        return false;
     }
 }

@@ -7,6 +7,7 @@ import io.cucumber.java.en.Then;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import org.testng.Assert;
 import pages.googlePage;
 
 import static common.SeleniumDriver.getDriver;
@@ -24,11 +25,17 @@ public class google {
     }
 
     googlePage gp=new googlePage(getDriver());
-    @Then("^Fail the test case$")
-    public void fail_the_test_case() throws Throwable {
-        Thread.sleep(5000);
-        gp.googleSearch_Box();
-        Thread.sleep(5000);
+    @Then("^Enter the \"([^\"]*)\" in Google search$")
+    public void enter_the_something_in_google_search(String strArg1) throws Throwable {
+        try {
+            gp.googleSearch_Box(strArg1);
+            gp.type_googleSearch_Btn();
+            Thread.sleep(5000);
+            gp.type_googleSearch_Btn();
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            Assert.assertTrue(false,"Failed to click on Seach");
+        }
     }
 
 }

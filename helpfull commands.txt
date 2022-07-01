@@ -15,3 +15,6 @@ https://www.javatpoint.com/java-regex
 7. Pattern prog tricks
 https://www.youtube.com/watch?v=lsOOs5J8ycw
 
+8. By and WebElement expected conditions
+https://www.selenium.dev/selenium/docs/api/java/org/openqa/selenium/support/ui/ExpectedConditions.html
+
