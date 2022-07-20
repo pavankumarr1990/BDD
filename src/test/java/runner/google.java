@@ -12,7 +12,7 @@ import java.util.Map;
 
 
 @CucumberOptions
-        (features = "src/test/resources/feature/google.feature",
+        (features = "src/test/resources/feature/HRMLOgin.feature",
                 glue = {"stepDef"},
 
                 plugin = {"pretty",
